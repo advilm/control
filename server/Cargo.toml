@@ -1,0 +1,14 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { version = "0.4.8", features = ["ws", "http2"] }
+futures = "0.3.21"
+serde = "1.0.136"
+serde_derive = "1.0.136"
+tokio = { version = "1.17.0", features = ["full"] }
+uuid = { version = "0.8.2", features = ["v4"] }

@@ -1,0 +1,10 @@
+# Frontend
+node_modules
+.next
+.env.local
+
+# Backend
+target
+config.toml
+
+.vscode
