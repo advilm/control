@@ -50,6 +50,14 @@ async fn main() {
                             .spawn()
                             .expect("Failed to execute process");
                     }
+                    "click" => {
+                        println!("xdotool click 1");
+                        tokio::process::Command::new("xdotool")
+                            .arg("click")
+                            .arg("1")
+                            .spawn()
+                            .expect("Failed to execute process");
+                    }
                     _ => {}
                 }
             }

@@ -20,8 +20,10 @@ export default function App() {
 					<Grid.Col span={1}></Grid.Col>
 					<Grid.Col span={1}>
 						<Button fullWidth='50' onClick={() => fetch('/api/run?q=left')}>Left</Button>
+					</Grid.Col>	
+					<Grid.Col span={1}>
+						<Button fullWidth='50' onClick={() => fetch('/api/run?q=click')}>Left</Button>
 					</Grid.Col>
-					<Grid.Col span={1}></Grid.Col>
 					<Grid.Col span={1}>
 						<Button fullWidth='50' onClick={() => fetch('/api/run?q=right')}>Right</Button>
 					</Grid.Col>
