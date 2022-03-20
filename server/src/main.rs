@@ -62,10 +62,9 @@ async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
         loop {
             interval.tick().await;
             println!("Ticking");
-            if let Some(socket) = websockets.lock().await.get_mut(&uuid) {
+            if let Some(socket) = websockets_clone.lock().await.get_mut(&uuid_clone) {
                 if let Err(e) = socket.send(Message::Text("tick".to_string())).await {
                     println!("Error sending heartbeat: {}", e);
-                    websockets.lock().await.remove(&uuid);
                     break;
                 }
             }
@@ -76,7 +75,7 @@ async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
         while let Some(msg) = receiver.next().await {
             if msg.is_err() {
                 println!("Error receiving message: {:?}", msg.err().unwrap());
-                websockets_clone.lock().await.remove(&uuid_clone);
+                websockets.lock().await.remove(&uuid);
                 break;
             }
         }
