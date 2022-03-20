@@ -48,10 +48,11 @@ async fn upgrade_ws(
 }
 
 async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
+    println!("New connection");
+    
     let uuid = uuid::Uuid::new_v4().to_simple().to_string();
     let (sender, mut receiver) = socket.split();
     websockets.lock().await.insert(uuid.clone(), sender);
-    println!("New connection");
 
     let websockets_clone = websockets.clone();
     let uuid_clone = uuid.clone();
@@ -73,7 +74,6 @@ async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
 
     tokio::spawn(async move {
         while let Some(msg) = receiver.next().await {
-            println!("Received message: {:?}", msg);
             if msg.is_err() {
                 println!("Error receiving message: {:?}", msg.err().unwrap());
                 websockets_clone.lock().await.remove(&uuid_clone);
@@ -84,6 +84,7 @@ async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
 }
 
 async fn handle_run(query: Query<Parameters>, Extension(websockets): Extension<WebSockets>) {
+    println!("Running command: {}", query.command);
     for (uuid, ws) in websockets.lock().await.iter_mut() {
         if ws.send(Message::Text(query.command.clone())).await.is_err() {
             websockets.lock().await.remove(uuid);
