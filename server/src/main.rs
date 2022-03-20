@@ -9,9 +9,11 @@ use axum::{
 };
 
 use futures::lock::Mutex;
-use std::sync::Arc;
 use std::collections::HashMap;
+use std::sync::Arc;
 type WebSockets = Arc<Mutex<HashMap<String, WebSocket>>>;
+
+use std::time::Duration;
 
 #[derive(serde_derive::Deserialize)]
 struct Parameters {
@@ -46,13 +48,19 @@ async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
     websockets.lock().await.insert(uuid.clone(), socket);
     println!("New connection");
 
-    // while let Some(msg) = websockets.lock().await.get_mut(&uuid).unwrap().recv().await {
-    //     if msg.is_err() {
-    //         println!("Connection closed");
-    //         websockets.lock().await.remove(&uuid);
-    //         return;
-    //     }
-    // }
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(60));
+        loop {
+            interval.tick().await;
+            println!("Ticking");
+            if let Some(socket) = websockets.lock().await.get_mut(&uuid) {
+                if let Err(e) = socket.send(Message::Text("tick".to_string())).await {
+                    println!("Error sending heartbeat: {}", e);
+                    break;
+                }
+            }
+        }
+    });
 }
 
 async fn handle_run(query: Query<Parameters>, Extension(websockets): Extension<WebSockets>) {
