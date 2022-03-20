@@ -8,10 +8,14 @@ use axum::{
     Router,
 };
 
-use futures::lock::Mutex;
+use futures::{
+    lock::Mutex,
+    sink::SinkExt,
+    stream::{SplitSink, StreamExt},
+};
 use std::collections::HashMap;
 use std::sync::Arc;
-type WebSockets = Arc<Mutex<HashMap<String, WebSocket>>>;
+type WebSockets = Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>;
 
 use std::time::Duration;
 
@@ -30,7 +34,7 @@ async fn main() {
         .route("/run", post(handle_run))
         .layer(Extension(ws_connections));
 
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+    axum::Server::bind(&"0.0.0.0:9000".parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
@@ -45,8 +49,12 @@ async fn upgrade_ws(
 
 async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
     let uuid = uuid::Uuid::new_v4().to_simple().to_string();
-    websockets.lock().await.insert(uuid.clone(), socket);
+    let (sender, mut receiver) = socket.split();
+    websockets.lock().await.insert(uuid.clone(), sender);
     println!("New connection");
+
+    let websockets_clone = websockets.clone();
+    let uuid_clone = uuid.clone();
 
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(60));
@@ -56,8 +64,20 @@ async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
             if let Some(socket) = websockets.lock().await.get_mut(&uuid) {
                 if let Err(e) = socket.send(Message::Text("tick".to_string())).await {
                     println!("Error sending heartbeat: {}", e);
+                    websockets.lock().await.remove(&uuid);
                     break;
                 }
+            }
+        }
+    });
+
+    tokio::spawn(async move {
+        while let Some(msg) = receiver.next().await {
+            println!("Received message: {:?}", msg);
+            if msg.is_err() {
+                println!("Error receiving message: {:?}", msg.err().unwrap());
+                websockets_clone.lock().await.remove(&uuid_clone);
+                break;
             }
         }
     });
