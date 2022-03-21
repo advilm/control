@@ -52,22 +52,20 @@ async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
     let (sender, mut receiver) = socket.split();
     websockets.lock().await.insert(uuid.clone(), sender);
 
-    tokio::spawn(async move {
-        while let Some(msg) = receiver.next().await {
-            if msg.is_ok() {
-                if let Some(socket) = websockets.lock().await.get_mut(&uuid) {
-                    if let Err(e) = socket.send(Message::Text("pong".to_string())).await {
-                        println!("Error sending message: {}", e);
-                        break;
-                    }
+    while let Some(msg) = receiver.next().await {
+        if msg.is_ok() {
+            if let Some(socket) = websockets.lock().await.get_mut(&uuid) {
+                if let Err(e) = socket.send(Message::Text("pong".to_string())).await {
+                    println!("Error sending message: {}", e);
+                    break;
                 }
-            } else {
-                println!("Error receiving message: {:?}", msg.err().unwrap());
-                break;
             }
+        } else {
+            println!("Error receiving message: {:?}", msg.err().unwrap());
+            break;
         }
-        websockets.lock().await.remove(&uuid);
-    });
+    }
+    websockets.lock().await.remove(&uuid);
 }
 
 async fn handle_run(query: Query<Parameters>, Extension(websockets): Extension<WebSockets>) {
