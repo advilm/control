@@ -13,8 +13,9 @@ use futures::{
     sink::SinkExt,
     stream::{SplitSink, StreamExt},
 };
-use std::collections::HashMap;
-use std::sync::Arc;
+
+use std::{collections::HashMap, sync::Arc};
+
 type WebSockets = Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>;
 
 #[derive(serde_derive::Deserialize)]

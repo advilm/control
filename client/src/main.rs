@@ -16,7 +16,7 @@ async fn main() {
             let (mut write, read) = ws_stream.split();
 
             tokio::spawn(async move {
-                let mut interval = tokio::time::interval(Duration::from_secs(90));
+                let mut interval = tokio::time::interval(Duration::from_secs(60));
                 loop {
                     interval.tick().await;
                     if let Err(e) = write.send(Message::Text("ping".to_string())).await {
