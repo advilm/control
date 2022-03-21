@@ -1,19 +1,30 @@
-use futures_util::StreamExt;
-use tokio_tungstenite::connect_async;
+use futures_util::{StreamExt, SinkExt};
 use std::time::Duration;
+use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 #[tokio::main]
-async fn main() {    
+async fn main() {
     let mut interval = tokio::time::interval(Duration::from_secs(5));
     let url = url::Url::parse("ws://control.advil.me/ws").unwrap();
-    
+
     loop {
         interval.tick().await;
         if let Ok(connection) = connect_async(&url).await {
             let ws_stream = connection.0;
             println!("WebSocket handshake has been successfully completed");
 
-            let (_, read) = ws_stream.split();
+            let (mut write, read) = ws_stream.split();
+
+            tokio::spawn(async move {
+                let mut interval = tokio::time::interval(Duration::from_secs(90));
+                loop {
+                    interval.tick().await;
+                    if let Err(e) = write.send(Message::Text("ping".to_string())).await {
+                        println!("Error sending message: {}", e);
+                        break;
+                    }
+                }
+            });
 
             read.for_each(|data| async {
                 if !data.is_err() {

@@ -17,8 +17,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 type WebSockets = Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>;
 
-use std::time::Duration;
-
 #[derive(serde_derive::Deserialize)]
 struct Parameters {
     command: String,
@@ -49,36 +47,26 @@ async fn upgrade_ws(
 
 async fn handle_socket(socket: WebSocket, websockets: WebSockets) {
     println!("New connection");
-    
+
     let uuid = uuid::Uuid::new_v4().to_simple().to_string();
     let (sender, mut receiver) = socket.split();
     websockets.lock().await.insert(uuid.clone(), sender);
 
-    let websockets_clone = websockets.clone();
-    let uuid_clone = uuid.clone();
-
-    tokio::spawn(async move {
-        let mut interval = tokio::time::interval(Duration::from_secs(60));
-        loop {
-            interval.tick().await;
-            println!("Ticking");
-            if let Some(socket) = websockets_clone.lock().await.get_mut(&uuid_clone) {
-                if let Err(e) = socket.send(Message::Text("tick".to_string())).await {
-                    println!("Error sending heartbeat: {}", e);
-                    break;
-                }
-            }
-        }
-    });
-
     tokio::spawn(async move {
         while let Some(msg) = receiver.next().await {
-            if msg.is_err() {
+            if msg.is_ok() {
+                if let Some(socket) = websockets.lock().await.get_mut(&uuid) {
+                    if let Err(e) = socket.send(Message::Text("pong".to_string())).await {
+                        println!("Error sending message: {}", e);
+                        break;
+                    }
+                }
+            } else {
                 println!("Error receiving message: {:?}", msg.err().unwrap());
-                websockets.lock().await.remove(&uuid);
                 break;
             }
         }
+        websockets.lock().await.remove(&uuid);
     });
 }
 
