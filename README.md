@@ -4,3 +4,6 @@ The controls are very crude on purpose, this program was just for me to test web
 
 ## Architecture
 ![Diagram](./diagram.svg)
+
+## Demo
+https://user-images.githubusercontent.com/40906275/159724561-f22d5530-8233-4456-bd80-8a78655da16f.mp4
