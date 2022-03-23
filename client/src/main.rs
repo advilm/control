@@ -1,24 +1,23 @@
-use futures_util::{StreamExt, SinkExt};
+use futures_util::{SinkExt, StreamExt};
 use std::time::Duration;
-use tokio_tungstenite::{connect_async, tungstenite::Message};
+use tokio::{process::Command, time::sleep};
+use tokio_tungstenite::{connect_async_tls_with_config, tungstenite::Message};
 
 #[tokio::main]
 async fn main() {
-    let mut interval = tokio::time::interval(Duration::from_secs(5));
-    let url = url::Url::parse("ws://control.advil.me/ws").unwrap();
+    let duration = Duration::from_secs(5);
+    let url = url::Url::parse("wss://control.advil.me/ws").unwrap();
 
     loop {
-        interval.tick().await;
-        if let Ok(connection) = connect_async(&url).await {
-            let ws_stream = connection.0;
+        if let Ok(connection) = connect_async_tls_with_config(&url, None, None).await {
             println!("WebSocket handshake has been successfully completed");
 
-            let (mut write, read) = ws_stream.split();
+            let (mut write, read) = connection.0.split();
 
             tokio::spawn(async move {
-                let mut interval = tokio::time::interval(Duration::from_secs(60));
+                let duration = Duration::from_secs(45);
                 loop {
-                    interval.tick().await;
+                    sleep(duration).await;
                     if let Err(e) = write.send(Message::Text("ping".to_string())).await {
                         println!("Error sending message: {}", e);
                         break;
@@ -27,56 +26,48 @@ async fn main() {
             });
 
             read.for_each(|data| async {
-                if !data.is_err() {
-                    if let Ok(message) = data.unwrap().into_text() {
-                        match &message[..] {
-                            "up" => {
-                                println!("xdotool key Up");
-                                tokio::process::Command::new("xdotool")
-                                    .arg("mousemove_relative")
-                                    .arg("0")
-                                    .arg("-100")
-                                    .spawn()
-                                    .expect("Failed to execute process");
-                            }
-                            "down" => {
-                                println!("xdotool key Down");
-                                tokio::process::Command::new("xdotool")
-                                    .arg("mousemove_relative")
-                                    .arg("0")
-                                    .arg("100")
-                                    .spawn()
-                                    .expect("Failed to execute process");
-                            }
-                            "left" => {
-                                println!("xdotool key Left");
-                                tokio::process::Command::new("xdotool")
-                                    .arg("mousemove_relative")
-                                    .arg("--")
-                                    .arg("-100")
-                                    .arg("0")
-                                    .spawn()
-                                    .expect("Failed to execute process");
-                            }
-                            "right" => {
-                                println!("xdotool key Right");
-                                tokio::process::Command::new("xdotool")
-                                    .arg("mousemove_relative")
-                                    .arg("100")
-                                    .arg("0")
-                                    .spawn()
-                                    .expect("Failed to execute process");
-                            }
-                            "click" => {
-                                println!("xdotool click 1");
-                                tokio::process::Command::new("xdotool")
-                                    .arg("click")
-                                    .arg("1")
-                                    .spawn()
-                                    .expect("Failed to execute process");
-                            }
-                            _ => {}
+                if data.is_err() {
+                    return;
+                }
+
+                if let Ok(message) = data.unwrap().into_text() {
+                    match &message[..] {
+                        "up" => {
+                            println!("xdotool mousemove_relative 0 -100");
+                            Command::new("xdotool")
+                                .args(["mousemove_relative", "0", "-100"])
+                                .spawn()
+                                .expect("Failed to execute process");
                         }
+                        "down" => {
+                            println!("xdotool mousemove_relative 0 100");
+                            Command::new("xdotool")
+                                .args(["mousemove_relative", "0", "100"])
+                                .spawn()
+                                .expect("Failed to execute process");
+                        }
+                        "left" => {
+                            println!("xdotool mousemove_relative -- -100 0");
+                            Command::new("xdotool")
+                                .args(["mousemove_relative", "--", "-100", "0"])
+                                .spawn()
+                                .expect("Failed to execute process");
+                        }
+                        "right" => {
+                            println!("xdotool mousemove_relative 100 0");
+                            Command::new("xdotool")
+                                .args(["mousemove_relative", "100", "0"])
+                                .spawn()
+                                .expect("Failed to execute process");
+                        }
+                        "click" => {
+                            println!("xdotool click 1");
+                            Command::new("xdotool")
+                                .args(["click", "1"])
+                                .spawn()
+                                .expect("Failed to execute process");
+                        }
+                        _ => {}
                     }
                 }
             })
@@ -84,5 +75,7 @@ async fn main() {
         } else {
             println!("WebSocket handshake has failed");
         }
+
+        sleep(duration).await;
     }
 }
