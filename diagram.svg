@@ -13,15 +13,15 @@
 <ellipse fill="none" stroke="#000000" cx="130.3179" cy="-234" rx="43.5022" ry="18"/>
 <text text-anchor="middle" x="130.3179" y="-229.8" font-family="Times,serif" font-size="14.00" fill="#000000">frontend</text>
 </g>
-<!-- nginx (auth) -->
+<!-- auth (nginx) -->
 <g id="node2" class="node">
-<title>nginx (auth)</title>
+<title>auth (nginx)</title>
 <ellipse fill="none" stroke="#000000" cx="130.3179" cy="-162" rx="58.5104" ry="18"/>
-<text text-anchor="middle" x="130.3179" y="-157.8" font-family="Times,serif" font-size="14.00" fill="#000000">nginx (auth)</text>
+<text text-anchor="middle" x="130.3179" y="-157.8" font-family="Times,serif" font-size="14.00" fill="#000000">auth (nginx)</text>
 </g>
-<!-- frontend&#45;&gt;nginx (auth) -->
+<!-- frontend&#45;&gt;auth (nginx) -->
 <g id="edge1" class="edge">
-<title>frontend-&gt;nginx (auth)</title>
+<title>frontend-&gt;auth (nginx)</title>
 <path fill="none" stroke="#000000" d="M130.3179,-215.8314C130.3179,-208.131 130.3179,-198.9743 130.3179,-190.4166"/>
 <polygon fill="#000000" stroke="#000000" points="133.818,-190.4132 130.3179,-180.4133 126.818,-190.4133 133.818,-190.4132"/>
 </g>
@@ -31,9 +31,9 @@
 <ellipse fill="none" stroke="#000000" cx="130.3179" cy="-90" rx="34.7476" ry="18"/>
 <text text-anchor="middle" x="130.3179" y="-85.8" font-family="Times,serif" font-size="14.00" fill="#000000">server</text>
 </g>
-<!-- nginx (auth)&#45;&gt;server -->
+<!-- auth (nginx)&#45;&gt;server -->
 <g id="edge2" class="edge">
-<title>nginx (auth)-&gt;server</title>
+<title>auth (nginx)-&gt;server</title>
 <path fill="none" stroke="#000000" d="M130.3179,-143.8314C130.3179,-136.131 130.3179,-126.9743 130.3179,-118.4166"/>
 <polygon fill="#000000" stroke="#000000" points="133.818,-118.4132 130.3179,-108.4133 126.818,-118.4133 133.818,-118.4132"/>
 </g>
